@@ -16,19 +16,33 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # 1. Setup Node.js (For Auth, Employee, Attendance, Lambda Authorizer)
       - name: Setup Node.js Environment
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      # Java Build karne ke liye JDK setup karna zaroori hai
-      - name: Set up JDK 17 for Leave Service
+      # 2. Setup Java (For Leave & Recruitment Services)
+      - name: Set up JDK 17 for Java Services
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
 
+      # 3. Setup Python (For Payroll Service)
+      - name: Set up Python 3.11 for Python Services
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # 4. Setup Go (For Performance Service)
+      - name: Set up Go for Performance Service
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      # AWS Configuration
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -36,141 +50,60 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
 
-      # 1. Deploy Auth Service
-      - name: Deploy Auth Service
+      # --- NODE.JS SERVICES ---
+
+      - name: Deploy Auth Service (Node.js)
         run: |
           cd services/auth-service
           npm install --production
           zip -r auth-service.zip .
-          if aws lambda get-function --function-name nexushrm-uat-auth-service > /dev/null 2>&1; then
-            echo "Function exists, updating code..."
-            aws lambda update-function-code --function-name nexushrm-uat-auth-service --zip-file fileb://auth-service.zip
-          else
-            echo "Function does not exist, creating new..."
-            aws lambda create-function --function-name nexushrm-uat-auth-service \
-              --runtime nodejs20.x --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
-              --handler index.handler --zip-file fileb://auth-service.zip
-          fi
-          aws lambda wait function-updated --function-name nexushrm-uat-auth-service
-          aws lambda update-function-configuration --function-name nexushrm-uat-auth-service \
-            --environment "Variables={DB_HOST=${{ vars.DB_HOST }},DB_PORT=${{ vars.DB_PORT }},DB_NAME=${{ vars.DB_NAME }},DB_USER=${{ vars.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }}}"
+          aws lambda update-function-code --function-name nexushrm-uat-auth-service --zip-file fileb://auth-service.zip
 
-      # 2. Deploy Employee Service
-      - name: Deploy Employee Service
+      - name: Deploy Employee Service (Node.js)
         run: |
           cd services/employee-service
           npm install --production
           zip -r employee-service.zip .
-          if aws lambda get-function --function-name nexushrm-uat-employee-service > /dev/null 2>&1; then
-            echo "Function exists, updating code..."
-            aws lambda update-function-code --function-name nexushrm-uat-employee-service --zip-file fileb://employee-service.zip
-          else
-            echo "Function does not exist, creating new..."
-            aws lambda create-function --function-name nexushrm-uat-employee-service \
-              --runtime nodejs20.x --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
-              --handler index.handler --zip-file fileb://employee-service.zip
-          fi
-          aws lambda wait function-updated --function-name nexushrm-uat-employee-service
-          aws lambda update-function-configuration --function-name nexushrm-uat-employee-service \
-            --environment "Variables={DB_HOST=${{ vars.DB_HOST }},DB_PORT=${{ vars.DB_PORT }},DB_NAME=${{ vars.DB_NAME }},DB_USER=${{ vars.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }}}"
+          aws lambda update-function-code --function-name nexushrm-uat-employee-service --zip-file fileb://employee-service.zip
 
-      # 3. Deploy Attendance Service
-      - name: Deploy Attendance Service
+      - name: Deploy Attendance Service (Node.js)
         run: |
           cd services/attendance-service
           npm install --production
           zip -r attendance-service.zip .
-          if aws lambda get-function --function-name nexushrm-uat-attendance-service > /dev/null 2>&1; then
-            echo "Function exists, updating code..."
-            aws lambda update-function-code --function-name nexushrm-uat-attendance-service --zip-file fileb://attendance-service.zip
-          else
-            echo "Function does not exist, creating new..."
-            aws lambda create-function --function-name nexushrm-uat-attendance-service \
-              --runtime nodejs20.x --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
-              --handler index.handler --zip-file fileb://attendance-service.zip
-          fi
-          aws lambda wait function-updated --function-name nexushrm-uat-attendance-service
-          aws lambda update-function-configuration --function-name nexushrm-uat-attendance-service \
-            --environment "Variables={DB_HOST=${{ vars.DB_HOST }},DB_PORT=${{ vars.DB_PORT }},DB_NAME=${{ vars.DB_NAME }},DB_USER=${{ vars.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }}}"
+          aws lambda update-function-code --function-name nexushrm-uat-attendance-service --zip-file fileb://attendance-service.zip
 
-      # 4. Build & Deploy Leave Service (Java / Maven)
-      - name: Deploy Leave Service
+      # --- JAVA SERVICES (Maven) ---
+
+      - name: Deploy Leave Service (Java)
         run: |
           cd services/leave-service
-          # Java project ko clean build karke fat jar file banana
           mvn clean package -DskipTests
-          
-          # Target folder mein bani hui .jar file ko deploy karna (Aapke pom.xml ke finalName ke mutabiq app.jar ya project-version.jar ho sakti hai)
-          # Hum yahan target/*.jar pick kar rahe hain
           JAR_FILE=$(ls target/*.jar | head -n 1)
-          
-          if aws lambda get-function --function-name nexushrm-uat-leave-service > /dev/null 2>&1; then
-            echo "Function exists, updating code..."
-            aws lambda update-function-code --function-name nexushrm-uat-leave-service --zip-file fileb://$JAR_FILE
-          else
-            echo "Function does not exist, creating new..."
-            # Note: Handler aapke Java code ke main function package k mutabiq hona chahiye (e.g., com.nexushrm.Handler::handleRequest)
-            aws lambda create-function --function-name nexushrm-uat-leave-service \
-              --runtime java17 --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
-              --handler com.nexushrm.Handler::handleRequest --zip-file fileb://$JAR_FILE
-          fi
-          aws lambda wait function-updated --function-name nexushrm-uat-leave-service
-          aws lambda update-function-configuration --function-name nexushrm-uat-leave-service \
-            --environment "Variables={DB_HOST=${{ vars.DB_HOST }},DB_PORT=${{ vars.DB_PORT }},DB_NAME=${{ vars.DB_NAME }},DB_USER=${{ vars.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }}}"
+          aws lambda update-function-code --function-name nexushrm-uat-leave-service --zip-file fileb://$JAR_FILE
 
-      # 5. Deploy Payroll Service
-      - name: Deploy Payroll Service
-        run: |
-          cd services/payroll-service
-          npm install --production
-          zip -r payroll-service.zip .
-          if aws lambda get-function --function-name nexushrm-uat-payroll-service > /dev/null 2>&1; then
-            echo "Function exists, updating code..."
-            aws lambda update-function-code --function-name nexushrm-uat-payroll-service --zip-file fileb://payroll-service.zip
-          else
-            echo "Function does not exist, creating new..."
-            aws lambda create-function --function-name nexushrm-uat-payroll-service \
-              --runtime nodejs20.x --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
-              --handler index.handler --zip-file fileb://payroll-service.zip
-          fi
-          aws lambda wait function-updated --function-name nexushrm-uat-payroll-service
-          aws lambda update-function-configuration --function-name nexushrm-uat-payroll-service \
-            --environment "Variables={DB_HOST=${{ vars.DB_HOST }},DB_PORT=${{ vars.DB_PORT }},DB_NAME=${{ vars.DB_NAME }},DB_USER=${{ vars.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }}}"
-
-      # 6. Deploy Performance Service
-      - name: Deploy Performance Service
-        run: |
-          cd services/performance-service
-          npm install --production
-          zip -r performance-service.zip .
-          if aws lambda get-function --function-name nexushrm-uat-performance-service > /dev/null 2>&1; then
-            echo "Function exists, updating code..."
-            aws lambda update-function-code --function-name nexushrm-uat-performance-service --zip-file fileb://performance-service.zip
-          else
-            echo "Function does not exist, creating new..."
-            aws lambda create-function --function-name nexushrm-uat-performance-service \
-              --runtime nodejs20.x --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
-              --handler index.handler --zip-file fileb://performance-service.zip
-          fi
-          aws lambda wait function-updated --function-name nexushrm-uat-performance-service
-          aws lambda update-function-configuration --function-name nexushrm-uat-performance-service \
-            --environment "Variables={DB_HOST=${{ vars.DB_HOST }},DB_PORT=${{ vars.DB_PORT }},DB_NAME=${{ vars.DB_NAME }},DB_USER=${{ vars.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }}}"
-
-      # 7. Deploy Recruitment Service
-      - name: Deploy Recruitment Service
+      - name: Deploy Recruitment Service (Java)
         run: |
           cd services/recruitment-service
-          npm install --production
-          zip -r recruitment-service.zip .
-          if aws lambda get-function --function-name nexushrm-uat-recruitment-service > /dev/null 2>&1; then
-            echo "Function exists, updating code..."
-            aws lambda update-function-code --function-name nexushrm-uat-recruitment-service --zip-file fileb://recruitment-service.zip
-          else
-            echo "Function does not exist, creating new..."
-            aws lambda create-function --function-name nexushrm-uat-recruitment-service \
-              --runtime nodejs20.x --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
-              --handler index.handler --zip-file fileb://recruitment-service.zip
-          fi
-          aws lambda wait function-updated --function-name nexushrm-uat-recruitment-service
-          aws lambda update-function-configuration --function-name nexushrm-uat-recruitment-service \
-            --environment "Variables={DB_HOST=${{ vars.DB_HOST }},DB_PORT=${{ vars.DB_PORT }},DB_NAME=${{ vars.DB_NAME }},DB_USER=${{ vars.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }}}"
+          mvn clean package -DskipTests
+          JAR_FILE=$(ls target/*.jar | head -n 1)
+          aws lambda update-function-code --function-name nexushrm-uat-recruitment-service --zip-file fileb://$JAR_FILE
+
+      # --- PYTHON SERVICES ---
+
+      - name: Deploy Payroll Service (Python)
+        run: |
+          cd services/payroll-service
+          pip install -r requirements.txt -t .
+          zip -r payroll-service.zip .
+          aws lambda update-function-code --function-name nexushrm-uat-payroll-service --zip-file fileb://payroll-service.zip
+
+      # --- GO SERVICES ---
+
+      - name: Deploy Performance Service (Go)
+        run: |
+          cd services/performance-service
+          # Go binary ko Linux target (Lambda) ke liye compile karna
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bootstrap main.go
+          zip performance-service.zip bootstrap
+          aws lambda update-function-code --function-name nexushrm-uat-performance-service --zip-file fileb://performance-service.zip
