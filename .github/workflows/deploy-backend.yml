@@ -57,21 +57,39 @@ jobs:
           cd services/auth-service
           npm install --production
           zip -r auth-service.zip .
-          aws lambda update-function-code --function-name nexushrm-uat-auth-service --zip-file fileb://auth-service.zip
+          if aws lambda get-function --function-name nexushrm-uat-auth-service > /dev/null 2>&1; then
+            aws lambda update-function-code --function-name nexushrm-uat-auth-service --zip-file fileb://auth-service.zip
+          else
+            aws lambda create-function --function-name nexushrm-uat-auth-service \
+              --runtime nodejs20.x --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
+              --handler index.handler --zip-file fileb://auth-service.zip
+          fi
 
       - name: Deploy Employee Service (Node.js)
         run: |
           cd services/employee-service
           npm install --production
           zip -r employee-service.zip .
-          aws lambda update-function-code --function-name nexushrm-uat-employee-service --zip-file fileb://employee-service.zip
+          if aws lambda get-function --function-name nexushrm-uat-employee-service > /dev/null 2>&1; then
+            aws lambda update-function-code --function-name nexushrm-uat-employee-service --zip-file fileb://employee-service.zip
+          else
+            aws lambda create-function --function-name nexushrm-uat-employee-service \
+              --runtime nodejs20.x --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
+              --handler index.handler --zip-file fileb://employee-service.zip
+          fi
 
       - name: Deploy Attendance Service (Node.js)
         run: |
           cd services/attendance-service
           npm install --production
           zip -r attendance-service.zip .
-          aws lambda update-function-code --function-name nexushrm-uat-attendance-service --zip-file fileb://attendance-service.zip
+          if aws lambda get-function --function-name nexushrm-uat-attendance-service > /dev/null 2>&1; then
+            aws lambda update-function-code --function-name nexushrm-uat-attendance-service --zip-file fileb://attendance-service.zip
+          else
+            aws lambda create-function --function-name nexushrm-uat-attendance-service \
+              --runtime nodejs20.x --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
+              --handler index.handler --zip-file fileb://attendance-service.zip
+          fi
 
       # --- JAVA SERVICES (Maven) ---
 
@@ -80,14 +98,26 @@ jobs:
           cd services/leave-service
           mvn clean package -DskipTests
           JAR_FILE=$(ls target/*.jar | head -n 1)
-          aws lambda update-function-code --function-name nexushrm-uat-leave-service --zip-file fileb://$JAR_FILE
+          if aws lambda get-function --function-name nexushrm-uat-leave-service > /dev/null 2>&1; then
+            aws lambda update-function-code --function-name nexushrm-uat-leave-service --zip-file fileb://$JAR_FILE
+          else
+            aws lambda create-function --function-name nexushrm-uat-leave-service \
+              --runtime java17 --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
+              --handler com.nexushrm.Handler::handleRequest --zip-file fileb://$JAR_FILE
+          fi
 
       - name: Deploy Recruitment Service (Java)
         run: |
           cd services/recruitment-service
           mvn clean package -DskipTests
           JAR_FILE=$(ls target/*.jar | head -n 1)
-          aws lambda update-function-code --function-name nexushrm-uat-recruitment-service --zip-file fileb://$JAR_FILE
+          if aws lambda get-function --function-name nexushrm-uat-recruitment-service > /dev/null 2>&1; then
+            aws lambda update-function-code --function-name nexushrm-uat-recruitment-service --zip-file fileb://$JAR_FILE
+          else
+            aws lambda create-function --function-name nexushrm-uat-recruitment-service \
+              --runtime java17 --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
+              --handler com.nexushrm.Handler::handleRequest --zip-file fileb://$JAR_FILE
+          fi
 
       # --- PYTHON SERVICES ---
 
@@ -96,14 +126,25 @@ jobs:
           cd services/payroll-service
           pip install -r requirements.txt -t .
           zip -r payroll-service.zip .
-          aws lambda update-function-code --function-name nexushrm-uat-payroll-service --zip-file fileb://payroll-service.zip
+          if aws lambda get-function --function-name nexushrm-uat-payroll-service > /dev/null 2>&1; then
+            aws lambda update-function-code --function-name nexushrm-uat-payroll-service --zip-file fileb://payroll-service.zip
+          else
+            aws lambda create-function --function-name nexushrm-uat-payroll-service \
+              --runtime python3.11 --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
+              --handler app.handler --zip-file fileb://payroll-service.zip
+          fi
 
       # --- GO SERVICES ---
 
       - name: Deploy Performance Service (Go)
         run: |
           cd services/performance-service
-          # Go binary ko Linux target (Lambda) ke liye compile karna
           GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bootstrap main.go
           zip performance-service.zip bootstrap
-          aws lambda update-function-code --function-name nexushrm-uat-performance-service --zip-file fileb://performance-service.zip
+          if aws lambda get-function --function-name nexushrm-uat-performance-service > /dev/null 2>&1; then
+            aws lambda update-function-code --function-name nexushrm-uat-performance-service --zip-file fileb://performance-service.zip
+          else
+            aws lambda create-function --function-name nexushrm-uat-performance-service \
+              --runtime provided.al2023 --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
+              --handler bootstrap --zip-file fileb://performance-service.zip
+          fi
