@@ -35,14 +35,15 @@ jobs:
           npm install --production
           zip -r auth-service.zip .
           
-          # Function create ya update code
           aws lambda create-function --function-name nexushrm-uat-auth-service \
             --runtime nodejs20.x --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
             --handler index.handler --zip-file fileb://auth-service.zip || \
           aws lambda update-function-code --function-name nexushrm-uat-auth-service \
             --zip-file fileb://auth-service.zip
+
+          # Code update hone ka wait karein taake conflict na aaye
+          aws lambda wait function-updated --function-name nexushrm-uat-auth-service
             
-          # Database Configuration Variables Inject karna
           aws lambda update-function-configuration --function-name nexushrm-uat-auth-service \
             --environment "Variables={DB_HOST=${{ vars.DB_HOST }},DB_PORT=${{ vars.DB_PORT }},DB_NAME=${{ vars.DB_NAME }},DB_USER=${{ vars.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }}}"
 
@@ -53,13 +54,14 @@ jobs:
           npm install --production
           zip -r employee-service.zip .
           
-          # Function create ya update code
           aws lambda create-function --function-name nexushrm-uat-employee-service \
             --runtime nodejs20.x --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
             --handler index.handler --zip-file fileb://employee-service.zip || \
           aws lambda update-function-code --function-name nexushrm-uat-employee-service \
             --zip-file fileb://employee-service.zip
+
+          # Code update hone ka wait karein taake conflict na aaye
+          aws lambda wait function-updated --function-name nexushrm-uat-employee-service
             
-          # Database Configuration Variables Inject karna
           aws lambda update-function-configuration --function-name nexushrm-uat-employee-service \
             --environment "Variables={DB_HOST=${{ vars.DB_HOST }},DB_PORT=${{ vars.DB_PORT }},DB_NAME=${{ vars.DB_NAME }},DB_USER=${{ vars.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }}}"
