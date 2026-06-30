@@ -3,7 +3,7 @@ name: Deploy Frontend Portals to AWS S3 (UAT)
 on:
   push:
     branches:
-      - main
+      - uat # Ab ye workflow sirf uat branch par push hone se chalega
     paths:
       - 'frontend/**'
       - 'devops-dashboard/**'
