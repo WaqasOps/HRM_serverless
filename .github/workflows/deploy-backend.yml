@@ -21,6 +21,14 @@ jobs:
         with:
           node-version: 20
 
+      # Java Build karne ke liye JDK setup karna zaroori hai
+      - name: Set up JDK 17 for Leave Service
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -85,20 +93,26 @@ jobs:
           aws lambda update-function-configuration --function-name nexushrm-uat-attendance-service \
             --environment "Variables={DB_HOST=${{ vars.DB_HOST }},DB_PORT=${{ vars.DB_PORT }},DB_NAME=${{ vars.DB_NAME }},DB_USER=${{ vars.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }}}"
 
-      # 4. Deploy Leave Service
+      # 4. Build & Deploy Leave Service (Java / Maven)
       - name: Deploy Leave Service
         run: |
           cd services/leave-service
-          npm install --production
-          zip -r leave-service.zip .
+          # Java project ko clean build karke fat jar file banana
+          mvn clean package -DskipTests
+          
+          # Target folder mein bani hui .jar file ko deploy karna (Aapke pom.xml ke finalName ke mutabiq app.jar ya project-version.jar ho sakti hai)
+          # Hum yahan target/*.jar pick kar rahe hain
+          JAR_FILE=$(ls target/*.jar | head -n 1)
+          
           if aws lambda get-function --function-name nexushrm-uat-leave-service > /dev/null 2>&1; then
             echo "Function exists, updating code..."
-            aws lambda update-function-code --function-name nexushrm-uat-leave-service --zip-file fileb://leave-service.zip
+            aws lambda update-function-code --function-name nexushrm-uat-leave-service --zip-file fileb://$JAR_FILE
           else
             echo "Function does not exist, creating new..."
+            # Note: Handler aapke Java code ke main function package k mutabiq hona chahiye (e.g., com.nexushrm.Handler::handleRequest)
             aws lambda create-function --function-name nexushrm-uat-leave-service \
-              --runtime nodejs20.x --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
-              --handler index.handler --zip-file fileb://leave-service.zip
+              --runtime java17 --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
+              --handler com.nexushrm.Handler::handleRequest --zip-file fileb://$JAR_FILE
           fi
           aws lambda wait function-updated --function-name nexushrm-uat-leave-service
           aws lambda update-function-configuration --function-name nexushrm-uat-leave-service \
