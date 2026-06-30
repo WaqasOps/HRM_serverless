@@ -3,14 +3,14 @@ name: Deploy Frontend Portals to AWS S3 (UAT)
 on:
   push:
     branches:
-      - uat # Ab ye workflow sirf uat branch par push hone se chalega
+      - uat
     paths:
       - 'frontend/**'
       - 'devops-dashboard/**'
       - '.github/workflows/deploy-frontends.yml'
 
 jobs:
-  # 1. Main Frontend Portal ki alag deployment job
+  # 1. Main Frontend Portal
   deploy-main-frontend:
     name: Build & Deploy Main Frontend (UAT Bucket)
     runs-on: ubuntu-latest
@@ -21,7 +21,7 @@ jobs:
       - name: Setup Node.js Environment
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20 # Upgrade to Node 20
           cache: 'npm'
           cache-dependency-path: './frontend/package-lock.json'
 
@@ -40,12 +40,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      # Yahan sirf frontend/dist/ ka data aapke frontend wale bucket mein jayega
       - name: Sync Main Frontend to Specific S3 Bucket
         run: |
           aws s3 sync frontend/dist/ s3://${{ vars.UAT_S3_BUCKET_FRONTEND }} --delete
 
-  # 2. DevOps Dashboard Portal ki alag deployment job
+  # 2. DevOps Dashboard Portal
   deploy-devops-dashboard:
     name: Build & Deploy DevOps Dashboard (UAT Bucket)
     runs-on: ubuntu-latest
@@ -56,7 +55,7 @@ jobs:
       - name: Setup Node.js Environment
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20 # Upgrade to Node 20
           cache: 'npm'
           cache-dependency-path: './devops-dashboard/package-lock.json'
 
@@ -75,7 +74,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      # Yahan sirf devops-dashboard/dist/ ka data aapke dashboard wale bucket mein jayega
       - name: Sync DevOps Dashboard to Specific S3 Bucket
         run: |
           aws s3 sync devops-dashboard/dist/ s3://${{ vars.UAT_S3_BUCKET_DEVOPS_DASHBOARD }} --delete
