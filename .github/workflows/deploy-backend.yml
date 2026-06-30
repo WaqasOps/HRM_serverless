@@ -64,6 +64,9 @@ jobs:
               --runtime nodejs20.x --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
               --handler index.handler --zip-file fileb://auth-service.zip
           fi
+          aws lambda wait function-updated --function-name nexushrm-uat-auth-service
+          aws lambda update-function-configuration --function-name nexushrm-uat-auth-service \
+            --environment "Variables={DB_HOST=${{ vars.DB_HOST }},DB_PORT=${{ vars.DB_PORT }},DB_NAME=${{ vars.DB_NAME }},DB_USER=${{ vars.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }}}"
 
       - name: Deploy Employee Service (Node.js)
         run: |
@@ -77,6 +80,9 @@ jobs:
               --runtime nodejs20.x --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
               --handler index.handler --zip-file fileb://employee-service.zip
           fi
+          aws lambda wait function-updated --function-name nexushrm-uat-employee-service
+          aws lambda update-function-configuration --function-name nexushrm-uat-employee-service \
+            --environment "Variables={DB_HOST=${{ vars.DB_HOST }},DB_PORT=${{ vars.DB_PORT }},DB_NAME=${{ vars.DB_NAME }},DB_USER=${{ vars.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }}}"
 
       - name: Deploy Attendance Service (Node.js)
         run: |
@@ -90,6 +96,9 @@ jobs:
               --runtime nodejs20.x --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
               --handler index.handler --zip-file fileb://attendance-service.zip
           fi
+          aws lambda wait function-updated --function-name nexushrm-uat-attendance-service
+          aws lambda update-function-configuration --function-name nexushrm-uat-attendance-service \
+            --environment "Variables={DB_HOST=${{ vars.DB_HOST }},DB_PORT=${{ vars.DB_PORT }},DB_NAME=${{ vars.DB_NAME }},DB_USER=${{ vars.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }}}"
 
       # --- JAVA SERVICES (Maven) ---
 
@@ -105,6 +114,9 @@ jobs:
               --runtime java17 --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
               --handler com.nexushrm.Handler::handleRequest --zip-file fileb://$JAR_FILE
           fi
+          aws lambda wait function-updated --function-name nexushrm-uat-leave-service
+          aws lambda update-function-configuration --function-name nexushrm-uat-leave-service \
+            --environment "Variables={DB_HOST=${{ vars.DB_HOST }},DB_PORT=${{ vars.DB_PORT }},DB_NAME=${{ vars.DB_NAME }},DB_USER=${{ vars.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }}}"
 
       - name: Deploy Recruitment Service (Java)
         run: |
@@ -118,6 +130,9 @@ jobs:
               --runtime java17 --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
               --handler com.nexushrm.Handler::handleRequest --zip-file fileb://$JAR_FILE
           fi
+          aws lambda wait function-updated --function-name nexushrm-uat-recruitment-service
+          aws lambda update-function-configuration --function-name nexushrm-uat-recruitment-service \
+            --environment "Variables={DB_HOST=${{ vars.DB_HOST }},DB_PORT=${{ vars.DB_PORT }},DB_NAME=${{ vars.DB_NAME }},DB_USER=${{ vars.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }}}"
 
       # --- PYTHON SERVICES ---
 
@@ -133,6 +148,9 @@ jobs:
               --runtime python3.11 --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
               --handler app.handler --zip-file fileb://payroll-service.zip
           fi
+          aws lambda wait function-updated --function-name nexushrm-uat-payroll-service
+          aws lambda update-function-configuration --function-name nexushrm-uat-payroll-service \
+            --environment "Variables={DB_HOST=${{ vars.DB_HOST }},DB_PORT=${{ vars.DB_PORT }},DB_NAME=${{ vars.DB_NAME }},DB_USER=${{ vars.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }}}"
 
       # --- GO SERVICES ---
 
@@ -156,3 +174,6 @@ jobs:
               --runtime provided.al2023 --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
               --handler bootstrap --zip-file fileb://performance-service.zip
           fi
+          aws lambda wait function-updated --function-name nexushrm-uat-performance-service
+          aws lambda update-function-configuration --function-name nexushrm-uat-performance-service \
+            --environment "Variables={DB_HOST=${{ secrets.DB_HOST }},DB_PORT=${{ secrets.DB_PORT }},DB_NAME=${{ secrets.DB_NAME }},DB_USER=${{ secrets.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }}}}"
