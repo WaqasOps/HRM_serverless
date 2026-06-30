@@ -139,8 +139,14 @@ jobs:
       - name: Deploy Performance Service (Go)
         run: |
           cd services/performance-service
+          
+          # Missing dependencies ko auto-download aur tidy karne ke liye
+          go mod tidy
+          
+          # Go binary ko Linux target (Lambda) ke liye compile karna
           GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bootstrap main.go
           zip performance-service.zip bootstrap
+          
           if aws lambda get-function --function-name nexushrm-uat-performance-service > /dev/null 2>&1; then
             aws lambda update-function-code --function-name nexushrm-uat-performance-service --zip-file fileb://performance-service.zip
           else
