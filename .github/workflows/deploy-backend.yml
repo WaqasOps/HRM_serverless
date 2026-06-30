@@ -140,11 +140,12 @@ jobs:
         run: |
           cd services/performance-service
           
-          # Go environment context setup aur module download guarantee karne k liye
+          # Force dependency downloading aur tidy up
           go env -w GO111MODULE=on
-          go mod download || go mod tidy
+          go mod tidy
+          go get github.com/lib/pq
           
-          # Lambda binary build setup
+          # Target Linux binary build karna
           GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -tags lambda.norpc -o bootstrap main.go
           zip performance-service.zip bootstrap
           
