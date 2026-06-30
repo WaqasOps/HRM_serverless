@@ -145,17 +145,17 @@ jobs:
       # 7. Deploy Recruitment Service
       - name: Deploy Recruitment Service
         run: |
-          cd services/recuritment-service
+          cd services/recruitment-service
           npm install --production
-          zip -r recuritment-service.zip .
+          zip -r recruitment-service.zip .
           if aws lambda get-function --function-name nexushrm-uat-recruitment-service > /dev/null 2>&1; then
             echo "Function exists, updating code..."
-            aws lambda update-function-code --function-name nexushrm-uat-recruitment-service --zip-file fileb://recuritment-service.zip
+            aws lambda update-function-code --function-name nexushrm-uat-recruitment-service --zip-file fileb://recruitment-service.zip
           else
             echo "Function does not exist, creating new..."
             aws lambda create-function --function-name nexushrm-uat-recruitment-service \
               --runtime nodejs20.x --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
-              --handler index.handler --zip-file fileb://recuritment-service.zip
+              --handler index.handler --zip-file fileb://recruitment-service.zip
           fi
           aws lambda wait function-updated --function-name nexushrm-uat-recruitment-service
           aws lambda update-function-configuration --function-name nexushrm-uat-recruitment-service \
