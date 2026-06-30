@@ -1,0 +1,53 @@
+name: Deploy Backend Microservices to AWS Lambda (UAT)
+
+on:
+  push:
+    branches:
+      - uat
+    paths:
+      - 'services/**'
+      - '.github/workflows/deploy-backend.yml'
+
+jobs:
+  deploy-services:
+    name: Build & Deploy Microservices
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      # 1. Deploy Auth Service
+      - name: Deploy Auth Service
+        run: |
+          cd services/auth-service
+          npm install --production
+          zip -r auth-service.zip .
+          aws lambda create-function --function-name nexushrm-uat-auth-service \
+            --runtime nodejs20.x --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
+            --handler index.handler --zip-file fileb://auth-service.zip || \
+          aws lambda update-function-code --function-name nexushrm-uat-auth-service \
+            --zip-file fileb://auth-service.zip
+
+      # 2. Deploy Employee Service
+      - name: Deploy Employee Service
+        run: |
+          cd services/employee-service
+          npm install --production
+          zip -r employee-service.zip .
+          aws lambda create-function --function-name nexushrm-uat-employee-service \
+            --runtime nodejs20.x --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
+            --handler index.handler --zip-file fileb://employee-service.zip || \
+          aws lambda update-function-code --function-name nexushrm-uat-employee-service \
+            --zip-file fileb://employee-service.zip
