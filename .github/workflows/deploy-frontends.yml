@@ -21,7 +21,7 @@ jobs:
       - name: Setup Node.js Environment
         uses: actions/setup-node@v4
         with:
-          node-version: 20 # Upgrade to Node 20
+          node-version: 20
           cache: 'npm'
           cache-dependency-path: './frontend/package-lock.json'
 
@@ -31,7 +31,7 @@ jobs:
           npm install
           npm run build
         env:
-          VITE_API_BASE_URL: ${{ vars.UAT_API_BASE_URL }}
+          VITE_API_BASE_URL: ${{ secrets.UAT_API_BASE_URL }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -42,7 +42,7 @@ jobs:
 
       - name: Sync Main Frontend to Specific S3 Bucket
         run: |
-          aws s3 sync frontend/dist/ s3://${{ vars.UAT_S3_BUCKET_FRONTEND }} --delete
+          aws s3 sync frontend/dist/ s3://${{ secrets.UAT_S3_BUCKET_FRONTEND }} --delete
 
   # 2. DevOps Dashboard Portal
   deploy-devops-dashboard:
@@ -55,7 +55,7 @@ jobs:
       - name: Setup Node.js Environment
         uses: actions/setup-node@v4
         with:
-          node-version: 20 # Upgrade to Node 20
+          node-version: 20
           cache: 'npm'
           cache-dependency-path: './devops-dashboard/package-lock.json'
 
@@ -65,7 +65,7 @@ jobs:
           npm install
           npm run build
         env:
-          VITE_API_BASE_URL: ${{ vars.UAT_API_BASE_URL }}
+          VITE_API_BASE_URL: ${{ secrets.UAT_API_BASE_URL }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -76,4 +76,4 @@ jobs:
 
       - name: Sync DevOps Dashboard to Specific S3 Bucket
         run: |
-          aws s3 sync devops-dashboard/dist/ s3://${{ vars.UAT_S3_BUCKET_DEVOPS_DASHBOARD }} --delete
+          aws s3 sync devops-dashboard/dist/ s3://${{ secrets.UAT_S3_BUCKET_DEVOPS_DASHBOARD }} --delete
