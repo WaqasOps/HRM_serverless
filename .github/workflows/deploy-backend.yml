@@ -62,10 +62,12 @@ jobs:
           else
             aws lambda create-function --function-name nexushrm-uat-auth-service \
               --runtime nodejs20.x --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
-              --handler index.handler --zip-file fileb://auth-service.zip
+              --handler index.handler --zip-file fileb://auth-service.zip \
+              --vpc-config SubnetIds=${{ secrets.AWS_SUBNET_IDS }},SecurityGroupIds=${{ secrets.AWS_SECURITY_GROUP_IDS }}
           fi
           aws lambda wait function-updated --function-name nexushrm-uat-auth-service
           aws lambda update-function-configuration --function-name nexushrm-uat-auth-service \
+            --vpc-config SubnetIds=${{ secrets.AWS_SUBNET_IDS }},SecurityGroupIds=${{ secrets.AWS_SECURITY_GROUP_IDS }} \
             --environment "{\"Variables\":{\"DB_HOST\":\"${{ vars.DB_HOST || secrets.DB_HOST }}\",\"DB_PORT\":\"${{ vars.DB_PORT || secrets.DB_PORT }}\",\"DB_NAME\":\"${{ vars.DB_NAME || secrets.DB_NAME }}\",\"DB_USER\":\"${{ vars.DB_USER || secrets.DB_USER }}\",\"DB_PASSWORD\":\"${{ secrets.DB_PASSWORD }}\"}}"
 
       - name: Deploy Employee Service (Node.js)
@@ -78,10 +80,12 @@ jobs:
           else
             aws lambda create-function --function-name nexushrm-uat-employee-service \
               --runtime nodejs20.x --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
-              --handler index.handler --zip-file fileb://employee-service.zip
+              --handler index.handler --zip-file fileb://employee-service.zip \
+              --vpc-config SubnetIds=${{ secrets.AWS_SUBNET_IDS }},SecurityGroupIds=${{ secrets.AWS_SECURITY_GROUP_IDS }}
           fi
           aws lambda wait function-updated --function-name nexushrm-uat-employee-service
           aws lambda update-function-configuration --function-name nexushrm-uat-employee-service \
+            --vpc-config SubnetIds=${{ secrets.AWS_SUBNET_IDS }},SecurityGroupIds=${{ secrets.AWS_SECURITY_GROUP_IDS }} \
             --environment "{\"Variables\":{\"DB_HOST\":\"${{ vars.DB_HOST || secrets.DB_HOST }}\",\"DB_PORT\":\"${{ vars.DB_PORT || secrets.DB_PORT }}\",\"DB_NAME\":\"${{ vars.DB_NAME || secrets.DB_NAME }}\",\"DB_USER\":\"${{ vars.DB_USER || secrets.DB_USER }}\",\"DB_PASSWORD\":\"${{ secrets.DB_PASSWORD }}\"}}"
 
       - name: Deploy Attendance Service (Node.js)
@@ -94,10 +98,12 @@ jobs:
           else
             aws lambda create-function --function-name nexushrm-uat-attendance-service \
               --runtime nodejs20.x --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
-              --handler index.handler --zip-file fileb://attendance-service.zip
+              --handler index.handler --zip-file fileb://attendance-service.zip \
+              --vpc-config SubnetIds=${{ secrets.AWS_SUBNET_IDS }},SecurityGroupIds=${{ secrets.AWS_SECURITY_GROUP_IDS }}
           fi
           aws lambda wait function-updated --function-name nexushrm-uat-attendance-service
           aws lambda update-function-configuration --function-name nexushrm-uat-attendance-service \
+            --vpc-config SubnetIds=${{ secrets.AWS_SUBNET_IDS }},SecurityGroupIds=${{ secrets.AWS_SECURITY_GROUP_IDS }} \
             --environment "{\"Variables\":{\"DB_HOST\":\"${{ vars.DB_HOST || secrets.DB_HOST }}\",\"DB_PORT\":\"${{ vars.DB_PORT || secrets.DB_PORT }}\",\"DB_NAME\":\"${{ vars.DB_NAME || secrets.DB_NAME }}\",\"DB_USER\":\"${{ vars.DB_USER || secrets.DB_USER }}\",\"DB_PASSWORD\":\"${{ secrets.DB_PASSWORD }}\"}}"
 
       # --- JAVA SERVICES (Maven) ---
@@ -112,10 +118,12 @@ jobs:
           else
             aws lambda create-function --function-name nexushrm-uat-leave-service \
               --runtime java17 --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
-              --handler com.nexushrm.Handler::handleRequest --zip-file fileb://$JAR_FILE
+              --handler com.nexushrm.Handler::handleRequest --zip-file fileb://$JAR_FILE \
+              --vpc-config SubnetIds=${{ secrets.AWS_SUBNET_IDS }},SecurityGroupIds=${{ secrets.AWS_SECURITY_GROUP_IDS }}
           fi
           aws lambda wait function-updated --function-name nexushrm-uat-leave-service
           aws lambda update-function-configuration --function-name nexushrm-uat-leave-service \
+            --vpc-config SubnetIds=${{ secrets.AWS_SUBNET_IDS }},SecurityGroupIds=${{ secrets.AWS_SECURITY_GROUP_IDS }} \
             --environment "{\"Variables\":{\"DB_HOST\":\"${{ vars.DB_HOST || secrets.DB_HOST }}\",\"DB_PORT\":\"${{ vars.DB_PORT || secrets.DB_PORT }}\",\"DB_NAME\":\"${{ vars.DB_NAME || secrets.DB_NAME }}\",\"DB_USER\":\"${{ vars.DB_USER || secrets.DB_USER }}\",\"DB_PASSWORD\":\"${{ secrets.DB_PASSWORD }}\"}}"
 
       - name: Deploy Recruitment Service (Java)
@@ -128,10 +136,12 @@ jobs:
           else
             aws lambda create-function --function-name nexushrm-uat-recruitment-service \
               --runtime java17 --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
-              --handler com.nexushrm.Handler::handleRequest --zip-file fileb://$JAR_FILE
+              --handler com.nexushrm.Handler::handleRequest --zip-file fileb://$JAR_FILE \
+              --vpc-config SubnetIds=${{ secrets.AWS_SUBNET_IDS }},SecurityGroupIds=${{ secrets.AWS_SECURITY_GROUP_IDS }}
           fi
           aws lambda wait function-updated --function-name nexushrm-uat-recruitment-service
           aws lambda update-function-configuration --function-name nexushrm-uat-recruitment-service \
+            --vpc-config SubnetIds=${{ secrets.AWS_SUBNET_IDS }},SecurityGroupIds=${{ secrets.AWS_SECURITY_GROUP_IDS }} \
             --environment "{\"Variables\":{\"DB_HOST\":\"${{ vars.DB_HOST || secrets.DB_HOST }}\",\"DB_PORT\":\"${{ vars.DB_PORT || secrets.DB_PORT }}\",\"DB_NAME\":\"${{ vars.DB_NAME || secrets.DB_NAME }}\",\"DB_USER\":\"${{ vars.DB_USER || secrets.DB_USER }}\",\"DB_PASSWORD\":\"${{ secrets.DB_PASSWORD }}\"}}"
 
       # --- PYTHON SERVICES ---
@@ -146,10 +156,12 @@ jobs:
           else
             aws lambda create-function --function-name nexushrm-uat-payroll-service \
               --runtime python3.11 --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
-              --handler app.handler --zip-file fileb://payroll-service.zip
+              --handler app.handler --zip-file fileb://payroll-service.zip \
+              --vpc-config SubnetIds=${{ secrets.AWS_SUBNET_IDS }},SecurityGroupIds=${{ secrets.AWS_SECURITY_GROUP_IDS }}
           fi
           aws lambda wait function-updated --function-name nexushrm-uat-payroll-service
           aws lambda update-function-configuration --function-name nexushrm-uat-payroll-service \
+            --vpc-config SubnetIds=${{ secrets.AWS_SUBNET_IDS }},SecurityGroupIds=${{ secrets.AWS_SECURITY_GROUP_IDS }} \
             --environment "{\"Variables\":{\"DB_HOST\":\"${{ vars.DB_HOST || secrets.DB_HOST }}\",\"DB_PORT\":\"${{ vars.DB_PORT || secrets.DB_PORT }}\",\"DB_NAME\":\"${{ vars.DB_NAME || secrets.DB_NAME }}\",\"DB_USER\":\"${{ vars.DB_USER || secrets.DB_USER }}\",\"DB_PASSWORD\":\"${{ secrets.DB_PASSWORD }}\"}}"
 
       # --- GO SERVICES ---
@@ -172,8 +184,10 @@ jobs:
           else
             aws lambda create-function --function-name nexushrm-uat-performance-service \
               --runtime provided.al2023 --role ${{ secrets.AWS_LAMBDA_ROLE_ARN }} \
-              --handler bootstrap --zip-file fileb://performance-service.zip
+              --handler bootstrap --zip-file fileb://performance-service.zip \
+              --vpc-config SubnetIds=${{ secrets.AWS_SUBNET_IDS }},SecurityGroupIds=${{ secrets.AWS_SECURITY_GROUP_IDS }}
           fi
           aws lambda wait function-updated --function-name nexushrm-uat-performance-service
           aws lambda update-function-configuration --function-name nexushrm-uat-performance-service \
+            --vpc-config SubnetIds=${{ secrets.AWS_SUBNET_IDS }},SecurityGroupIds=${{ secrets.AWS_SECURITY_GROUP_IDS }} \
             --environment "{\"Variables\":{\"DB_HOST\":\"${{ vars.DB_HOST || secrets.DB_HOST }}\",\"DB_PORT\":\"${{ vars.DB_PORT || secrets.DB_PORT }}\",\"DB_NAME\":\"${{ vars.DB_NAME || secrets.DB_NAME }}\",\"DB_USER\":\"${{ vars.DB_USER || secrets.DB_USER }}\",\"DB_PASSWORD\":\"${{ secrets.DB_PASSWORD }}\"}}"
