@@ -44,6 +44,11 @@ jobs:
         run: |
           aws s3 sync frontend/dist/ s3://${{ secrets.UAT_S3_BUCKET_FRONTEND }} --delete
 
+      # ✨ Purane main frontend ka cache clear karne ke liye
+      - name: Clear CloudFront Cache (Main Frontend)
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.UAT_CLOUDFRONT_MAIN_ID }} --paths "/*"
+
   # 2. DevOps Dashboard Portal
   deploy-devops-dashboard:
     name: Build & Deploy DevOps Dashboard (UAT Bucket)
@@ -77,3 +82,8 @@ jobs:
       - name: Sync DevOps Dashboard to Specific S3 Bucket
         run: |
           aws s3 sync devops-dashboard/dist/ s3://${{ secrets.UAT_S3_BUCKET_DEVOPS_DASHBOARD }} --delete
+
+      # ✨ Is nayi distribution (E3L9ROIEMQA2EK) ka cache clear karne ke liye
+      - name: Clear CloudFront Cache (DevOps Dashboard)
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.UAT_CLOUDFRONT_DASHBOARD_ID }} --paths "/*"
