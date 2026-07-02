@@ -3,7 +3,7 @@ import { Activity, Server, RefreshCw, CheckCircle, AlertTriangle, ShieldAlert } 
 
 const DevOps = () => {
   // Use a configurable base URL so the DevOps UI can hit the Nginx gateway even when deployed elsewhere
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || window._env_?.VITE_API_BASE_URL || 'http://localhost:8000';
 
   const [services, setServices] = useState([
     { name: 'Auth Service', route: '/auth', status: 'Checking...', lastChecked: null, error: null },
