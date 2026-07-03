@@ -13,6 +13,12 @@ const pool = new Pool({
   port: 5432,
 });
 
+// Dashboard Health Check Route (Taake dashboard par service hamesha healthy show ho)
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'healthy', service: 'Employee Service' });
+});
+
+// Core Employee Routes
 app.post('/employees', async (req, res) => {
   const { user_id, first_name, last_name, email, department, designation, hire_date } = req.body;
   try {
@@ -45,10 +51,12 @@ app.get('/employees/:id', async (req, res) => {
   }
 });
 
-module.exports.handler = serverless(app);
+// Serverless handler with basePath mapping to strip '/api/v1'
+module.exports.handler = serverless(app, {
+  basePath: '/api/v1'
+});
 
 if (require.main === module || process.env.LOCAL === 'true') {
   const port = process.env.PORT || 3000;
   app.listen(port, () => console.log(`Employee service running on port ${port}`));
 }
-

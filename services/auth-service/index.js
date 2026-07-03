@@ -15,6 +15,11 @@ const pool = new Pool({
   port: 5432,
 });
 
+// Dashboard Health Check Route (Taake dashboard par service hamesha healthy show ho)
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'healthy', service: 'Auth Service' });
+});
+
 app.post('/auth/register', async (req, res) => {
   const { username, password, role } = req.body;
   try {
@@ -46,10 +51,12 @@ app.post('/auth/login', async (req, res) => {
   }
 });
 
-module.exports.handler = serverless(app);
+// Serverless handler with basePath mapping to strip '/api/v1'
+module.exports.handler = serverless(app, {
+  basePath: '/api/v1'
+});
 
 if (require.main === module || process.env.LOCAL === 'true') {
   const port = process.env.PORT || 3000;
   app.listen(port, () => console.log(`Auth service running on port ${port}`));
 }
-
